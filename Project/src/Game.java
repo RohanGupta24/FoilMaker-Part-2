@@ -63,6 +63,16 @@ public class Game implements Runnable{
             output = newUser(input);
         }else if(input.contains("LOGIN")){
             output = userLogin(input);
+        }else if(input.contains("JOINGAGAME")){
+            output = joinGame(input);
+        }else if(input.contains("ALLPARTICIPANTSHAVEJOINED")){
+            output = launchGame(input);
+        }else if(input.contains("STARTNEWGAME")){
+            output = newGame(input);
+        }else if(input.contains("PLAYERSUGGESTION")){
+            output = suggestions(input);
+        }else if(input.contains("PLAYERCHOICE")){
+            output = playerChoice(input);
         }
 
         return output;
@@ -103,7 +113,11 @@ public class Game implements Runnable{
         return null;
     }
 
-    public
+    public String playerChoice(String input){
+        return null;
+    }
+
+    
 
 
 
