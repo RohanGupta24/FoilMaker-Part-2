@@ -56,7 +56,7 @@ public class Game implements Runnable{
         }
     }
 
-    public String parse(String input){
+    public String getResponse(String input){
         String output = "";
 
         if(input.contains("CREATENEWUSER")){
@@ -80,12 +80,38 @@ public class Game implements Runnable{
 
     public String newUser(String input){
 
-        return null;
     }
 
+    //Not completely done -- need to work on the file input
     public String userLogin(String input){
+        String status = "";
+        String output = "RESPONSE--LOGIN--<" + status + ">--";
+        Array loginData = input.split("--");
+        if(loginData.length != 3) {
+            status = "INVALIDMESSAGEFORMAT";
+        }
+        else {
+            String username = loginData[1];
+            String password = loginData[2];
+            File f = new File("UserDatabase");
+            FileReader fr = new FileReader(f);
+            BufferedReader bfr = new BufferedReader(fr);
+            while(true) {
+                String userInfo = bfr.readLine();
+                if(userInfo.contains(username)) {
+                    break;
 
-        return null;
+                }
+                else if(userInfo.contains(password)) {
+                    break;
+                }
+                else if(userInfo == null) {
+
+                }
+            }
+
+
+        }
     }
 
     public String newGame(String input){
