@@ -1,4 +1,5 @@
 
+import java.lang.*;
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -43,8 +44,9 @@ public class Game implements Runnable{
             while (scan.hasNextLine()) {
                 String input = scan.nextLine();
                 System.out.println("Recived from client: " + input);
-
-                printWriter.printf("Echo: %s\n", input);
+                String output = parse(input);
+                System.out.println("Sent to client: " + output);
+                printWriter.printf("%s\n", output);
                 printWriter.flush();
             }
 
@@ -80,7 +82,53 @@ public class Game implements Runnable{
 
     public String newUser(String input){
 
-        return null;
+        String[] register = input.split("--");
+        String output = "RESPONSE--CREATENEWUSER--";
+
+
+
+
+
+        if(register.length < 2){
+            output += "INVALIDMESSAGEFORMATE";
+            return output;
+        }else if(register.length == 2){
+            output += "INVALIDPASSWORD";
+            return output;
+        }
+
+
+        if(register[1].length() < 10 && register[1].length() > 1){
+            String match = register[1];
+            if((!isAlphanumericUserName(match))){
+                output += "INVALIDUSERNAME";
+                return output;
+            }
+
+        }else{
+            output += "INVALIDUSERNAME";
+            return output;
+        }
+
+
+
+        if(register[2].length() < 10 && register[2].length() > 1){
+            String match = register[2];
+            if((!isAlphanumericPassword(match))){
+                output += "INVALIDPASSWORD";
+                return output;
+            }
+
+        }else{
+            output += "INVALIDPASSWORD";
+            return output;
+        }
+
+
+
+
+        output += "End";
+        return output;
     }
 
     public String userLogin(String input){
@@ -118,7 +166,46 @@ public class Game implements Runnable{
     }
 
     
+    public boolean isAlphanumericUserName(String check){
 
+        for(int i = 0; i < check.length(); i++){
+            if(!(Character.isLetterOrDigit(check.charAt(i)) || check.charAt(i) == '_')){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
+
+    public boolean isAlphanumericPassword(String check){
+        int upper = 0;
+        int number = 0;
+
+
+
+        for(int i = 0; i < check.length(); i++){
+
+            if(Character.isUpperCase(check.charAt(i))){
+                upper++;
+            }
+
+            if(Character.isDigit(check.charAt(i))){
+                number++;
+            }
+            if(Character.isLetterOrDigit(check.charAt(i)) || check.charAt(i) == '#' || check.charAt(i) == '&' ||
+                    check.charAt(i) == '$' || check.charAt(i) == '*'){
+               continue;
+            }
+        }
+
+        if(!(number > 0) || !(upper > 0)){
+            return false;
+        }
+
+        return true;
+    }
 
 
 
