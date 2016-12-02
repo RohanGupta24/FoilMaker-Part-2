@@ -9,7 +9,7 @@ public class Game implements Runnable{
 
     public static ArrayList<String> gameTokenList = new ArrayList<String>();     //ArrayList to store all of the game keys
     public static ArrayList<String> userTokenList = new ArrayList<String>();    //ArrayList to store all the user tokens
-    public static HashMap<String, String> userMap = new HashMap<String, String>();  //Map that holds userToken as the key and username as the value so one can look up a player through userToken
+    public static HashMap<String, String> userMap = new HashMap<String, String>();  //Map that holds username as the key and userToken as the value so one can look up a player through userToken
     public static HashMap<String,ArrayList<Player>> gameKeyMap = new HashMap<String,ArrayList<Player>>(); //Map to hold a list of
     // players for each game
 
@@ -136,7 +136,7 @@ public class Game implements Runnable{
 >>>>>>> origin/master
     }
 
-    //Not completely done -- need to work on the file input
+    //INCOMPLETE: Not completely done -- need to work on the file input
     public String userLogin(String input){
         String status = "";
         String output = "RESPONSE--LOGIN--";
@@ -147,25 +147,42 @@ public class Game implements Runnable{
         else {
             String username = loginData[1];
             String password = loginData[2];
-            File f = new File("UserDatabase");
-            FileReader fr = new FileReader(f);
-            BufferedReader bfr = new BufferedReader(fr);
-            String userInfo = bfr.readLine();
-            while(userInfo != null) {
-                if(userInfo.contains(username) && userInfo.contains(password)) { //NOT FUNCTIONAL: if login is successful, generate a unique user token of length 10
-                    String userToken = generateUserToken();
-                    status = "SUCCESS--";
-                    output += status;
-                    Player player = new Player(username, password);
-                    return output;
+            BufferedReader in = new BufferedReader(new FileReader(new File("UserDatabase")));
+            String line;
+            int counter = 0;
+            while((line = in.readLine()) != null) { //NOT FUNCTIONAL: if login is successful, generate a unique user token of length 10
+                if(line.contains(username)) {
+                    counter++;
+                    if(line.contains(password)) {
+                        String userToken = generateUserToken();
+                        status = "SUCCESS--";
+                        output += status;
+                        Player player = new Player(username, password);
+                        return output;
+                    }
+                    else {
+                        continue;
+                    }
                 }
                 else {
-                    userInfo = bfr.readLine();
+                    line = in.readLine();
                 }
             }
-
-
-            //if successful
+            if(counter == 0) {
+                status = "UNKNOWNUSER--";
+                output += status;
+                return output;
+            }
+            else if(counter == 1) {
+                status = "INVALIDUSERPASSWORD--";
+                output += status;
+                return output;
+            }
+            else if(userMap.containsKey(username)) { //How should we check whether the player is already logged in or not? ANSWER: Use HashMap that has a list of players for every gameToken?
+                status = "USERALREADYLOGGEDIN--";
+                output += status;
+                return output;
+            }
 
 
         }
@@ -228,15 +245,38 @@ public class Game implements Runnable{
 
     }
 
+    public String launchGame(String input){
+        String status = "";
+        String output = "RESPONSE--ALLPARTICIPANTSHAVEJOINED--";
+        String[] launchGameData = input.split("--");
+        String userToken = launchGameData[1];
+        boolean checkUserTokenValidity = isUserTokenValid(userToken);
+        String gameToken = launchGameData[2];
+        boolean checkGameTokenValidity = isGameTokenValid(gameToken);
+        if(checkUserTokenValidity == false) {
+            status = "USERNOTLOGGEDIN--";
+            output += status;
+            return output;
+        }
+        else if(checkGameTokenValidity == false) {
+            status = "INVALIDGAMETOKEN--";
+            output += status;
+            return output;
+        }
+        else if(playing == true) {
+            status = "USERNOTGAMELEADER--";
+            output += status;
+            return output;
+        }
+        else {
+            //Finish this off; if(SUCCESS)...
+        }
+    }
     public String sendWord(String input){
 
         return null;
     }
 
-    public String launchGame(String input){
-
-        return null;
-    }
 
     public String suggestions(String input){
 
