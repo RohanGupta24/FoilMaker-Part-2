@@ -1,4 +1,5 @@
 
+import java.lang.*;
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -7,6 +8,8 @@ public class Game implements Runnable{
     Socket socket;
 
     public static ArrayList<String> gameTokenList = new ArrayList<String>();     //ArrayList to store all of the game keys
+    public static ArrayList<String> userTokenList = new ArrayList<String>();    //ArrayList to store all the user tokens
+    public static HashMap<String, String> userMap = new HashMap<String, String>();  //Map that holds userToken as the key and username as the value so one can look up a player through userToken
     public static HashMap<String,ArrayList<Player>> gameKeyMap = new HashMap<String,ArrayList<Player>>(); //Map to hold a list of
     // players for each game
 
@@ -43,8 +46,9 @@ public class Game implements Runnable{
             while (scan.hasNextLine()) {
                 String input = scan.nextLine();
                 System.out.println("Recived from client: " + input);
-
-                printWriter.printf("Echo: %s\n", input);
+                String output = parse(input);
+                System.out.println("Sent to client: " + output);
+                printWriter.printf("%s\n", output);
                 printWriter.flush();
             }
 
@@ -80,15 +84,65 @@ public class Game implements Runnable{
 
     public String newUser(String input){
 
+<<<<<<< HEAD
+=======
+        String[] register = input.split("--");
+        String output = "RESPONSE--CREATENEWUSER--";
+
+
+
+
+
+        if(register.length < 2){
+            output += "INVALIDMESSAGEFORMAT--";
+            return output;
+        }else if(register.length == 2){
+            output += "INVALIDPASSWORD--";
+            return output;
+        }
+
+
+        if(register[1].length() < 10 && register[1].length() > 1){
+            String match = register[1];
+            if((!isAlphanumericUserName(match))){
+                output += "INVALIDUSERNAME--";
+                return output;
+            }
+
+        }else{
+            output += "INVALIDUSERNAME--";
+            return output;
+        }
+
+
+
+        if(register[2].length() < 10 && register[2].length() > 1){
+            String match = register[2];
+            if((!isAlphanumericPassword(match))){
+                output += "INVALIDPASSWORD--";
+                return output;
+            }
+
+        }else{
+            output += "INVALIDPASSWORD--";
+            return output;
+        }
+
+
+
+
+        output += "End";
+        return output;
+>>>>>>> origin/master
     }
 
     //Not completely done -- need to work on the file input
     public String userLogin(String input){
         String status = "";
-        String output = "RESPONSE--LOGIN--<" + status + ">--";
-        Array loginData = input.split("--");
+        String output = "RESPONSE--LOGIN--";
+        String[] loginData = input.split("--");
         if(loginData.length != 3) {
-            status = "INVALIDMESSAGEFORMAT";
+            status = "INVALIDMESSAGEFORMAT--";
         }
         else {
             String username = loginData[1];
@@ -96,32 +150,82 @@ public class Game implements Runnable{
             File f = new File("UserDatabase");
             FileReader fr = new FileReader(f);
             BufferedReader bfr = new BufferedReader(fr);
-            while(true) {
-                String userInfo = bfr.readLine();
-                if(userInfo.contains(username)) {
-                    break;
-
+            String userInfo = bfr.readLine();
+            while(userInfo != null) {
+                if(userInfo.contains(username) && userInfo.contains(password)) { //NOT FUNCTIONAL: if login is successful, generate a unique user token of length 10
+                    String userToken = generateUserToken();
+                    status = "SUCCESS--";
+                    output += status;
+                    Player player = new Player(username, password);
+                    return output;
                 }
-                else if(userInfo.contains(password)) {
-                    break;
-                }
-                else if(userInfo == null) {
-
+                else {
+                    userInfo = bfr.readLine();
                 }
             }
+
+
+            //if successful
 
 
         }
     }
 
     public String newGame(String input){
+        String status = "";
+        String output = "RESPONSE--STARTNEWGAME--";
+        String[] newGameData = input.split("--");
+        String userToken = newGameData[1];
+        boolean checkUserTokenValidity = isUserTokenValid(userToken);
+        if(checkUserTokenValidity == true) {
+            if(playing == false) { //INCOMPLETE: check if user is already playing (boolean value, true or false)
+                status = "SUCCESS--";
+                output += status;
+                return output;
+            }
+            else {
+                status = "FAILURE--";
+                output += status;
+                return output;
+            }
+        }
+        else {
+            status = "USERNOTLOGGEDIN--";
+            output += status;
+            return output;
+        }
 
-        return null;
     }
 
     public String joinGame(String input){
+        String status = "";
+        String output = "RESPONSE--JOINGAME--";
+        String[] joinGameData = input.split("--");
+        String userToken = joinGameData[1];
+        boolean checkUserTokenValidity = isUserTokenValid(userToken);
+        String gameToken = joinGameData[2];
+        boolean checkGameTokenValidity = isGameTokenValid(gameToken);
+        if(checkUserTokenValidity == false) {
+            status = "USERNOTLOGGEDIN--" + gameToken;
+            output += status;
+            return output;
+        }
+        else if(checkGameTokenValidity == false) {
+            status = "GAMEKEYNOTFOUND--" + gameToken;
+            output += status;
+            return output;
+        }
+        else if(playing == true) {
+            status = "FAILURE--" + gameToken;
+            output += status;
+            return output;
+        }
+        else { //INCOMPLETE: Have some kind of map that connects username to userToken?
+            String addParticipantMessage = "NEWPARTICIPANT--";
 
-        return null;
+        }
+
+
     }
 
     public String sendWord(String input){
@@ -144,7 +248,70 @@ public class Game implements Runnable{
     }
 
     
+    public boolean isAlphanumericUserName(String check){
 
+        for(int i = 0; i < check.length(); i++){
+            if(!(Character.isLetterOrDigit(check.charAt(i)) || check.charAt(i) == '_')){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
+
+    public boolean isAlphanumericPassword(String check){
+        int upper = 0;
+        int number = 0;
+
+
+
+        for(int i = 0; i < check.length(); i++){
+
+            if(Character.isUpperCase(check.charAt(i))){
+                upper++;
+            }
+
+            if(Character.isDigit(check.charAt(i))){
+                number++;
+            }
+            if(Character.isLetterOrDigit(check.charAt(i)) || check.charAt(i) == '#' || check.charAt(i) == '&' ||
+                    check.charAt(i) == '$' || check.charAt(i) == '*'){
+               continue;
+            }
+        }
+
+        if(!(number > 0) || !(upper > 0)){
+            return false;
+        }
+
+        return true;
+    }
+
+    public String generateUserToken() {
+        String userToken = RandomStringUtils.randomAlphanumeric(10);
+        return userToken;
+    }
+
+    public boolean isUserTokenValid(String userToken) {
+        for(int i = 0; i < userTokenList.size(); i++) {
+            if(userToken.equals(userTokenList.get(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isGameTokenValid(String gameToken) {
+        for(int i = 0; i < gameTokenList.size(); i++) {
+            if(gameToken.equals(gameTokenList.get(i))) {
+                return true;
+            }
+        }
+        return false;
+
+    }
 
 
 

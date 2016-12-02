@@ -7,8 +7,14 @@ public class Player {
     private static int fooled_by;
     private static String suggestion;
     private static String choice;
+    private static boolean loggedInAndPlaying;
 
-    public Player(String username, String userToken, String password, int cumulativeScore, int fooled, int fooled_by, String suggestion, String choice) {
+    public Player(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
+    public Player(String username, String userToken, String password, int cumulativeScore, int fooled, int fooled_by, String suggestion, String choice. boolean loggedInAndPlaying) {
         this.username = username;
         this.userToken = userToken;
         this.password = password;
@@ -17,6 +23,7 @@ public class Player {
         this.fooled_by = fooled_by;
         this.suggestion = suggestion;
         this.choice = choice;
+        this.loggedInAndPlaying = loggedInAndPlaying;
     }
 
         public String getUsername() {
@@ -65,6 +72,14 @@ public class Player {
 
         public void setFooled_by(int fooled_by) {
             this.fooled_by = fooled_by;
+        }
+
+        public boolean getLoggedInAndPlaying() {
+            return loggedInAndPlaying;
+        }
+
+        public void setLoggedInAndPlaying(boolean loggedInAndPlaying) {
+            this.loggedInAndPlaying = loggedInAndPlaying;
         }
 
 
