@@ -14,7 +14,8 @@ public class Player {
         this.password = password;
     }
 
-    public Player(String username, String userToken, String password, int cumulativeScore, int fooled, int fooled_by, String suggestion, String choice. boolean loggedInAndPlaying) {
+    public Player(String username, String userToken, String password, int cumulativeScore, int fooled, int fooled_by,
+                  String suggestion, String choice, boolean loggedInAndPlaying) {
         this.username = username;
         this.userToken = userToken;
         this.password = password;

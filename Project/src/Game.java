@@ -195,6 +195,7 @@ public class Game implements Runnable {
                 status = "SUCCESS--" + gameToken;
                 gameTokenList.add(gameToken);
                 output += status;
+                player.setLoggedInAndPlaying(true);
                 return output;
             } else {
                 status = "FAILURE--";
