@@ -47,7 +47,7 @@ public class Game implements Runnable {
             while (scan.hasNextLine()) {
                 String input = scan.nextLine();
                 System.out.println("Recived from client: " + input);
-                String output = parse(input);
+                String output = getResponse(input);
                 System.out.println("Sent to client: " + output);
                 printWriter.printf("%s\n", output);
                 printWriter.flush();
@@ -61,7 +61,7 @@ public class Game implements Runnable {
         }
     }
 
-    public String getResponse(String input) {
+    public String getResponse(String input) throws IOException{
         String output = "";
 
         if (input.contains("CREATENEWUSER")) {
@@ -85,8 +85,7 @@ public class Game implements Runnable {
 
     public String newUser(String input) {
 
-<<<<<<<HEAD
-                =======
+
         String[] register = input.split("--");
         String output = "RESPONSE--CREATENEWUSER--";
 
@@ -128,54 +127,59 @@ public class Game implements Runnable {
 
         output += "End";
         return output;
->>>>>>>origin / master
+
     }
 
     //INCOMPLETE: Not completely done -- need to work on the file input
-    public String userLogin(String input) {
+    public String userLogin(String input) throws IOException{
         String status = "";
         String output = "RESPONSE--LOGIN--";
         String[] loginData = input.split("--");
         if (loginData.length != 3) {
-            status = "INVALIDMESSAGEFORMAT--";
+            output += "INVALIDMESSAGEFORMAT--";
         } else {
             String username = loginData[1];
             String password = loginData[2];
+
             BufferedReader in = new BufferedReader(new FileReader(new File("UserDatabase")));
             String line;
             int counter = 0;
-            while ((line = in.readLine()) != null) { //NOT FUNCTIONAL: if login is successful, generate a unique user token of length 10
+            while ((line = in.readLine()) != null) {
                 if (line.contains(username)) {
                     counter++;
                     if (line.contains(password)) {
+
+                        for(Player player: playerList) {
+                            if(player.getUsername().equals(username)) {
+                                output += "USERALREADYLOGGEDIN";
+                                return output;
+                            }
+                        }
+
                         String userToken = generateUserToken();
                         status = "SUCCESS--" + userToken;
                         output += status;
                         Player player = new Player(username, password);
+                        playerList.add(player);
                         return output;
                     } else {
                         continue;
                     }
-                } else {
-                    line = in.readLine();
                 }
             }
+
             if (counter == 0) {
-                status = "UNKNOWNUSER--";
-                output += status;
+                output += "UNKNOWNUSER--";
                 return output;
             } else if (counter == 1) {
-                status = "INVALIDUSERPASSWORD--";
-                output += status;
-                return output;
-            } else if (userMap.get(u)) { //How should we check whether the player is already logged in or not? ANSWER: Use HashMap that has a list of players for every gameToken?
-                status = "USERALREADYLOGGEDIN--";
-                output += status;
+                output += "INVALIDUSERPASSWORD--";
                 return output;
             }
 
 
         }
+
+        return output;
     }
 
     public String newGame(String input) {
@@ -186,8 +190,8 @@ public class Game implements Runnable {
         boolean checkUserTokenValidity = isUserTokenValid(userToken);
         if (checkUserTokenValidity == true) {
             Player player = userMap.get(userToken);
-            if (player.loggedInAndPlaying == false) { //INCOMPLETE: check if user is already playing (boolean value, true or false)
-                String gameToken = generateGameToken()
+            if (player.getLoggedInAndPlaying() == false) { //INCOMPLETE: check if user is already playing (boolean value, true or false)
+                String gameToken = generateGameToken();
                 status = "SUCCESS--" + gameToken;
                 gameTokenList.add(gameToken);
                 output += status;
@@ -233,7 +237,7 @@ public class Game implements Runnable {
 
         }
 
-
+        return output;
     }
 
     public String launchGame(String input) {
@@ -260,6 +264,8 @@ public class Game implements Runnable {
         } else {
             //Finish this off; if(SUCCESS)...
         }
+
+        return output;
     }
 
     public String sendWord(String input) {
@@ -355,4 +361,4 @@ public class Game implements Runnable {
 
 
 
-}
+
