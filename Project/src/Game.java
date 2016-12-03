@@ -3,15 +3,16 @@ import java.lang.*;
 import java.util.*;
 import java.io.*;
 import java.net.*;
+import java.util.UUID;
 
 public class Game implements Runnable{
     Socket socket;
 
-    public static ArrayList<String> gameTokenList = new ArrayList<String>();     //ArrayList to store all of the game keys
+    /*public static ArrayList<String> gameTokenList = new ArrayList<String>();     //ArrayList to store all of the game keys
     public static ArrayList<String> userTokenList = new ArrayList<String>();    //ArrayList to store all the user tokens
-    public static HashMap<String, String> userMap = new HashMap<String, String>();  //Map that holds username as the key and userToken as the value so one can look up a player through userToken
+    public static HashMap<String, String> userMap = new HashMap<String, String>();*/  //Map that holds username as the key and userToken as the value so one can look up a player through userToken
     public static HashMap<String,ArrayList<Player>> gameKeyMap = new HashMap<String,ArrayList<Player>>(); //Map to hold a list of
-    // players for each game
+    // players for each game with userToken as the reference
 
     public Game(Socket socket){
         this.socket = socket;
@@ -155,7 +156,7 @@ public class Game implements Runnable{
                     counter++;
                     if(line.contains(password)) {
                         String userToken = generateUserToken();
-                        status = "SUCCESS--";
+                        status = "SUCCESS--" + userToken;
                         output += status;
                         Player player = new Player(username, password);
                         return output;
@@ -196,7 +197,8 @@ public class Game implements Runnable{
         boolean checkUserTokenValidity = isUserTokenValid(userToken);
         if(checkUserTokenValidity == true) {
             if(playing == false) { //INCOMPLETE: check if user is already playing (boolean value, true or false)
-                status = "SUCCESS--";
+                String gameToken = generateGameToken();
+                status = "SUCCESS--" + gameToken;
                 output += status;
                 return output;
             }
@@ -330,8 +332,19 @@ public class Game implements Runnable{
     }
 
     public String generateUserToken() {
-        String userToken = RandomStringUtils.randomAlphanumeric(10);
+        String userToken = UUID.randomUUID().toString();
+        if(userToken.length() > 10) {
+            userToken.substring(0,10);
+        }
         return userToken;
+    }
+
+    public String generateGameToken() {
+        String gameToken = UUID.randomUUID().toString();
+        if(gameToken.length() > 3) {
+            gameToken.substring(0,4);
+        }
+        return gameToken;
     }
 
     public boolean isUserTokenValid(String userToken) {
