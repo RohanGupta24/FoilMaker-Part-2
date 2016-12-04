@@ -11,6 +11,8 @@ public class Game implements Runnable {
     public static ArrayList<String> gameTokenList = new ArrayList<String>();     //ArrayList to store all of the game keys
     public static ArrayList<String> userTokenList = new ArrayList<String>();    //ArrayList to store all the user tokens
     public static ArrayList<Player> playerList = new ArrayList<Player>();
+    public static ArrayList<String> questionList = new ArrayList<String>();
+    public static ArrayList<String> answerList = new ArrayList<String>();
     //public static HashMap<String, String> userMap = new HashMap<String, String>();  //Map that holds username as the key and userToken as the value so one can look up a player through userToken
     //public static HashMap<String, ArrayList<Player>> gameKeyMap = new HashMap<String, ArrayList<Player>>(); //Map to hold a list of
     // players for each game with userToken as the reference
@@ -260,14 +262,25 @@ public class Game implements Runnable {
             return output;
         } else {
             //Finish this off; if(SUCCESS)...
+            //START GAME - how do we do this?
         }
 
         return output;
     }
 
-    public String sendWord(String input) throws IOException {
+    public String sendWord() throws IOException {
+        String output = "NEWGAMEWORD--";
         BufferedReader in = new BufferedReader(new FileReader(new File("WordleDeck")));
-        
+        String line;
+        while ((line = in.readLine()) != null) {
+            String[] questionAndAnswer = line.split(":");
+            String question = questionAndAnswer[0];
+            questionList.add(question);
+            String answer = questionAndAnswer[1];
+            answerList.add(answer);
+            output += question + "--" + answer;
+        }
+        return output;
     }
 
 
@@ -320,6 +333,15 @@ public class Game implements Runnable {
             output += "UNEXPECTEDMESSAGETYPE--";
             return output;
         }
+        return output;
+    }
+
+    public String sendRoundOptions() {
+        String output = "ROUNDOPTIONS--";
+        for(Player p: playerList) {
+            output += p.getSuggestion() + "--";
+        }
+        output += answerList.get(0);
         return output;
     }
 
