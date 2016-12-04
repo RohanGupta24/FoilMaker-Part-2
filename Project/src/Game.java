@@ -77,19 +77,15 @@ public class Game implements Runnable {
         } else if (input.contains("PLAYERSUGGESTION")) {
             output = suggestions(input);
         } else if (input.contains("PLAYERCHOICE")) {
-            output = playerChoice(input);
+            output = choices(input);
         }
 
         return output;
     }
 
     public String newUser(String input) {
-
-
         String[] register = input.split("--");
         String output = "RESPONSE--CREATENEWUSER--";
-
-
         if (register.length < 2) {
             output += "INVALIDMESSAGEFORMAT--";
             return output;
@@ -269,19 +265,114 @@ public class Game implements Runnable {
         return output;
     }
 
-    public String sendWord(String input) {
-
-        return null;
+    public String sendWord(String input) throws IOException {
+        BufferedReader in = new BufferedReader(new FileReader(new File("WordleDeck")));
+        
     }
 
 
     public String suggestions(String input) {
-
-        return null;
+        String output = "RESPONSE--PLAYERSUGGESTION--";
+        String[] playerSuggestionData = input.split("--");
+        String userToken = playerSuggestionData[1];
+        String gameToken = playerSuggestionData[2];
+        String suggestion = playerSuggestionData[3];
+        int userEquals = 0;
+        int gameEquals = 0;
+        for(String uToken: userTokenList) {
+            if(userToken.equals(uToken)) {
+                userEquals++;
+                break;
+            }
+            else {
+                continue;
+            }
+        }
+        for(String gToken: gameTokenList) {
+            if(gameToken.equals(gToken)) {
+                gameEquals++;
+                break;
+            }
+            else {
+                continue;
+            }
+        }
+        if(userEquals == 0) {
+            output += "USERNOTLOGGEDIN--";
+            return output;
+        }
+        else if(gameEquals == 0) {
+            output += "INVALIDGAMETOKEN--";
+            return output;
+        }
+        else if(userEquals == 1 && gameEquals == 1) {
+            for(Player p: playerList) {
+                if(p.getUserToken().equals(userToken) && p.getGameToken().equals(gameToken)) {
+                    p.setSuggestion(suggestion);
+                }
+            }
+        }
+        else if(gameToken.length() != 3 && userToken.length() != 10) {
+            output += "INVALIDMESSAGEFORMAT--";
+            return output;
+        }
+        else {
+            output += "UNEXPECTEDMESSAGETYPE--";
+            return output;
+        }
+        return output;
     }
 
-    public String playerChoice(String input) {
-        return null;
+    public String choices(String input) {
+        String output = "RESPONSE--PLAYERCHOICE--";
+        String[] playerChoiceData = input.split("--");
+        String userToken = playerChoiceData[1];
+        String gameToken = playerChoiceData[2];
+        String choice = playerChoiceData[3];
+        int userEquals = 0;
+        int gameEquals = 0;
+        for(String uToken: userTokenList) {
+            if(userToken.equals(uToken)) {
+                userEquals++;
+                break;
+            }
+            else {
+                continue;
+            }
+        }
+        for(String gToken: gameTokenList) {
+            if(gameToken.equals(gToken)) {
+                gameEquals++;
+                break;
+            }
+            else {
+                continue;
+            }
+        }
+        if(userEquals == 0) {
+            output += "USERNOTLOGGEDIN--";
+            return output;
+        }
+        else if(gameEquals == 0) {
+            output += "INVALIDGAMETOKEN--";
+            return output;
+        }
+        else if(userEquals == 1 && gameEquals == 1) {
+            for(Player p: playerList) {
+                if(p.getUserToken().equals(userToken) && p.getGameToken().equals(gameToken)) {
+                    p.setChoice(choice);
+                }
+            }
+        }
+        else if(gameToken.length() != 3 && userToken.length() != 10) {
+            output += "INVALIDMESSAGEFORMAT--";
+            return output;
+        }
+        else {
+            output += "UNEXPECTEDMESSAGETYPE--";
+            return output;
+        }
+        return output;
     }
 
 
@@ -358,8 +449,3 @@ public class Game implements Runnable {
 
     }
 }
-
-
-
-
-
