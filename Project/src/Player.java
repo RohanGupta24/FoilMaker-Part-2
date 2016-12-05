@@ -1,3 +1,5 @@
+import java.net.Socket;
+
 public class Player {
     private static String username;
     private static String userToken;
@@ -9,6 +11,8 @@ public class Player {
     private static String suggestion;
     private static String choice;
     private static boolean loggedInAndPlaying;
+    private static int port;
+    private static String message;
 
     public Player(String username, String password) {
         this.username = username;
@@ -16,7 +20,7 @@ public class Player {
     }
 
     public Player(String username, String userToken, String gameToken, String password, int cumulativeScore, int fooled, int fooled_by,
-                  String suggestion, String choice, boolean loggedInAndPlaying) {
+                  String suggestion, String choice, boolean loggedInAndPlaying, int port, String message) {
         this.username = username;
         this.userToken = userToken;
         this.password = password;
@@ -25,12 +29,16 @@ public class Player {
         this.fooled_by = fooled_by;
         this.suggestion = suggestion;
         this.choice = choice;
-        this.loggedInAndPlaying = loggedInAndPlaying;
+        this.loggedInAndPlaying = false;
         this.gameToken = gameToken;
+        this.port = port;
+        this.message = "Hello";
+
+
     }
 
         public String getUsername() {
-            return username;
+            return this.username;
         }
 
         public void setUsername(String username) {
@@ -38,7 +46,7 @@ public class Player {
         }
 
         public String getPassword() {
-            return password;
+            return this.password;
         }
 
         public void setPassword(String password) {
@@ -46,7 +54,7 @@ public class Player {
         }
 
         public String getUserToken() {
-            return userToken;
+            return this.userToken;
         }
 
         public void setUserToken(String userToken) {
@@ -54,7 +62,7 @@ public class Player {
         }
 
         public String getGameToken() {
-            return gameToken;
+            return this.gameToken;
         }
 
         public void setGameToken(String gameToken) {
@@ -62,7 +70,7 @@ public class Player {
         }
 
         public int getCumulativeScore() {
-            return cumulativeScore;
+            return this.cumulativeScore;
         }
 
         public void setCumulativeScore(int cumulativeScore) {
@@ -70,7 +78,7 @@ public class Player {
         }
 
         public int getFooled() {
-            return fooled;
+            return this.fooled;
         }
 
         public void setFooled(int fooled) {
@@ -78,7 +86,7 @@ public class Player {
         }
 
         public int getFooled_by() {
-            return fooled_by;
+            return this.fooled_by;
         }
 
         public void setFooled_by(int fooled_by) {
@@ -86,7 +94,7 @@ public class Player {
         }
 
         public String getSuggestion() {
-            return suggestion;
+            return this.suggestion;
         }
 
         public void setSuggestion(String suggestion) {
@@ -94,7 +102,7 @@ public class Player {
         }
 
         public String getChoice() {
-            return choice;
+            return this.choice;
         }
 
         public void setChoice(String choice) {
@@ -102,12 +110,28 @@ public class Player {
         }
 
         public boolean getLoggedInAndPlaying() {
-            return loggedInAndPlaying;
+            return this.loggedInAndPlaying;
         }
 
         public void setLoggedInAndPlaying(boolean loggedInAndPlaying) {
             this.loggedInAndPlaying = loggedInAndPlaying;
         }
+
+        public void setPort(int port){this.port = port;}
+
+        public int getPort(){return this.port;}
+
+
+
+        public void setMessage(String message){
+            this.message = message;
+        }
+
+        public String getMessage(){
+            return this.message;
+        }
+
+
 
 
 

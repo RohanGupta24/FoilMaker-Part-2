@@ -17,7 +17,10 @@ public class Game implements Runnable {
     //public static HashMap<String, ArrayList<Player>> gameKeyMap = new HashMap<String, ArrayList<Player>>(); //Map to hold a list of
     // players for each game with userToken as the reference
     public static HashMap<String, Player> userMap = new HashMap<String, Player>(); //User token is the key and the value is a player object
+    public static HashMap<String, ArrayList<Player>> gameMap = new HashMap<>(); //Game map: gameToken is key and
+    // arraylist of players in game is value
 
+    PrintWriter printWriter;
 
     public Game(Socket socket) {
         this.socket = socket;
@@ -38,11 +41,14 @@ public class Game implements Runnable {
 
 
     public void run() {
-        System.out.println("Connection received from " + socket.getLocalSocketAddress());
+        System.out.println("Connection received from " + socket.getPort());
+
+
+
 
         try {
 
-            PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
+            printWriter = new PrintWriter(socket.getOutputStream());
             Scanner scan = new Scanner(socket.getInputStream());
 
 
@@ -50,9 +56,11 @@ public class Game implements Runnable {
                 String input = scan.nextLine();
                 System.out.println("Recived from client: " + input);
                 String output = getResponse(input);
-                System.out.println("Sent to client: " + output);
-                printWriter.printf("%s\n", output);
-                printWriter.flush();
+                if(!(output.contains("skip"))) {
+                    System.out.println("Sent to client: " + output);
+                    printWriter.printf("%s\n", output);
+                    printWriter.flush();
+                }
             }
 
 
@@ -64,13 +72,13 @@ public class Game implements Runnable {
     }
 
     public String getResponse(String input) throws IOException{
-        String output = "";
+        String output = "FAIL";
 
         if (input.contains("CREATENEWUSER")) {
             output = newUser(input);
         } else if (input.contains("LOGIN")) {
             output = userLogin(input);
-        } else if (input.contains("JOINGAGAME")) {
+        } else if (input.contains("JOINGAME")) {
             output = joinGame(input);
         } else if (input.contains("ALLPARTICIPANTSHAVEJOINED")) {
             output = launchGame(input);
@@ -80,12 +88,15 @@ public class Game implements Runnable {
             output = suggestions(input);
         } else if (input.contains("PLAYERCHOICE")) {
             output = choices(input);
+        } else if (input.contains("LOGOUT")){
+            output = logout(socket.getPort());
+            System.out.println("Logout" + output);
         }
 
         return output;
     }
 
-    public String newUser(String input) {
+    public String newUser(String input) throws IOException{
         String[] register = input.split("--");
         String output = "RESPONSE--CREATENEWUSER--";
         if (register.length < 2) {
@@ -123,14 +134,20 @@ public class Game implements Runnable {
         }
 
 
-        output += "End";
+        String write = "\n" + register[1] + ":" + register[2] + ":0:0:0";
+        BufferedWriter in = new BufferedWriter(new FileWriter(new File("UserDatabase"), true));
+        in.write(write);
+        in.close();
+
+
+        output += "SUCCESS";
         return output;
 
     }
 
     //INCOMPLETE: Not completely done -- need to work on the file input
     public String userLogin(String input) throws IOException{
-        String status = "";
+
         String output = "RESPONSE--LOGIN--";
         String[] loginData = input.split("--");
         if (loginData.length != 3) {
@@ -140,12 +157,18 @@ public class Game implements Runnable {
             String password = loginData[2];
 
             BufferedReader in = new BufferedReader(new FileReader(new File("UserDatabase")));
-            String line;
+            String line = "";
             int counter = 0;
+
             while ((line = in.readLine()) != null) {
-                if (line.contains(username)) {
+
+                String[] databaseLine = line.split(":");
+
+
+                if(databaseLine[0].equals(username)){
                     counter++;
-                    if (line.contains(password)) {
+
+                    if(databaseLine[1].equals(password)){
 
                         for(Player player: playerList) {
                             if(player.getUsername().equals(username)) {
@@ -155,13 +178,15 @@ public class Game implements Runnable {
                         }
 
                         String userToken = generateUserToken();
-                        status = "SUCCESS--" + userToken;
-                        output += status;
+                        output += "SUCCESS--"  + userToken;
+
                         Player player = new Player(username, password);
                         playerList.add(player);
+                        userTokenList.add(userToken);
+                        userMap.put(userToken,player);
+                        player.setPort(socket.getPort());
+                        userMap.get(userToken).setLoggedInAndPlaying(false);
                         return output;
-                    } else {
-                        continue;
                     }
                 }
             }
@@ -169,12 +194,13 @@ public class Game implements Runnable {
             if (counter == 0) {
                 output += "UNKNOWNUSER--";
                 return output;
-            } else if (counter == 1) {
-                output += "INVALIDUSERPASSWORD--";
-                return output;
             }
 
 
+            if (counter >= 1) {
+                output += "INVALIDUSERPASSWORD--";
+                return output;
+            }
         }
 
         return output;
@@ -188,12 +214,66 @@ public class Game implements Runnable {
         boolean checkUserTokenValidity = isUserTokenValid(userToken);
         if (checkUserTokenValidity == true) {
             Player player = userMap.get(userToken);
-            if (player.getLoggedInAndPlaying() == false) { //INCOMPLETE: check if user is already playing (boolean value, true or false)
+            if (player.getLoggedInAndPlaying() == false) {
                 String gameToken = generateGameToken();
                 status = "SUCCESS--" + gameToken;
                 gameTokenList.add(gameToken);
                 output += status;
-                player.setLoggedInAndPlaying(true);
+                //userMap.get(userToken).setLoggedInAndPlaying(true);
+                ArrayList<Player> newGame = new ArrayList();
+                newGame.add(player);
+                gameMap.put(gameToken, newGame);
+                player.setMessage("Hello1");
+
+                Thread check = new Thread(){
+                    public void run(){
+
+                        System.out.println("Test: " + player.getMessage());
+
+                        boolean keepGoing = true;
+
+                        while(keepGoing) {
+
+                            if(player.getMessage().contains("ALL")){
+
+                                ArrayList e = gameMap.get(gameToken);
+                                System.out.println(gameMap.get(gameToken).toString());
+
+                                for(int i = 0; i < e.size(); i++){
+
+                                    System.out.println(e.get(i).toString());
+
+                                }
+                                return;
+                            }
+
+                            if(player.getMessage().contains("Start")){
+                                printWriter.printf("%s\n",player.getMessage().substring(5));
+                                printWriter.flush();
+                                player.setMessage("Nope");
+                            }
+
+                            try{
+                                Thread.sleep(1000);
+                            }catch (InterruptedException e){
+                                e.printStackTrace();
+                            }
+                        }
+
+
+                    }
+
+                };
+
+                check.start();
+
+
+
+
+
+
+
+
                 return output;
             } else {
                 status = "FAILURE--";
@@ -208,31 +288,38 @@ public class Game implements Runnable {
 
     }
 
-    public String joinGame(String input) {
-        String status = "";
+    public String joinGame(String input) throws IOException {
+
         String output = "RESPONSE--JOINGAME--";
         String[] joinGameData = input.split("--");
         String userToken = joinGameData[1];
-        boolean checkUserTokenValidity = isUserTokenValid(userToken);
         String gameToken = joinGameData[2];
-        boolean checkGameTokenValidity = isGameTokenValid(gameToken);
-        Player player = userMap.get(userToken);
-        if (checkUserTokenValidity == false) {
-            status = "USERNOTLOGGEDIN--" + gameToken;
-            output += status;
+        Player currentPlayer = userMap.get(userToken);
+
+        if (!(isUserTokenValid(userToken))) {
+            output += "USERNOTLOGGEDIN--";
             return output;
-        } else if (checkGameTokenValidity == false) {
-            status = "GAMEKEYNOTFOUND--" + gameToken;
-            output += status;
+        } else if (!(isGameTokenValid(gameToken))) {
+            output += "GAMEKEYNOTFOUND--";
             return output;
-        } else if (player.getLoggedInAndPlaying() == true) {
-            status = "FAILURE--" + gameToken;
-            output += status;
+        } else if (userMap.get(userToken).getLoggedInAndPlaying()) {
+
+            for(int i = 0 ; i < playerList.size(); i++){
+                System.out.println(playerList.get(i).getLoggedInAndPlaying());
+            }
+            output += "FAILURE--";
             return output;
-        } else { //INCOMPLETE: Have some kind of map that connects username to userToken?
-            String username = player.getUsername();
-            int cumulativeScore = player.getCumulativeScore();
-            String addParticipantMessage = "NEWPARTICIPANT--" + username + "--" + cumulativeScore;
+        } else {
+            ArrayList gamePlayers = gameMap.get(gameToken);
+
+            Player leader = (Player)gamePlayers.get(0);
+            leader.setMessage("StartNEWPARTICIPANT--" + currentPlayer.getUsername() + "--" + currentPlayer
+                    .getCumulativeScore());
+            gamePlayers.add(currentPlayer);
+            gameMap.replace(gameToken, gameMap.get(gameToken), gamePlayers);
+            output += "skip";
+
+
 
         }
 
@@ -240,13 +327,24 @@ public class Game implements Runnable {
     }
 
     public String launchGame(String input) {
-        String status = "";
+
+
         String output = "RESPONSE--ALLPARTICIPANTSHAVEJOINED--";
         String[] launchGameData = input.split("--");
         String userToken = launchGameData[1];
-        boolean checkUserTokenValidity = isUserTokenValid(userToken);
         String gameToken = launchGameData[2];
-        boolean checkGameTokenValidity = isGameTokenValid(gameToken);
+
+        userMap.get(userToken).setMessage("ALLPARTICIPANTSHAVEJOINED");
+        if(!(userTokenList.contains(userToken))){
+            output += "USERNOTLOGGEDIN--";
+            return output;
+        }else if(!(gameTokenList.contains(gameToken))){
+            output += "INVALIDGAMETOKEN--";
+            return output;
+        }
+
+
+        /*
         Player player = userMap.get(userToken);
         if (checkUserTokenValidity == false) {
             status = "USERNOTLOGGEDIN--";
@@ -264,7 +362,7 @@ public class Game implements Runnable {
             //Finish this off; if(SUCCESS)...
             //START GAME - how do we do this?
         }
-
+        */
         return output;
     }
 
@@ -438,23 +536,35 @@ public class Game implements Runnable {
 
     public String generateUserToken() {
         String userToken = UUID.randomUUID().toString();
-        if (userToken.length() > 10) {
-            userToken.substring(0, 10);
+        String output = "";
+        int count = 0;
+
+        for(int i = 0; count < 10; i++){
+            if(Character.isLetterOrDigit(userToken.charAt(i))){
+                output =  output + userToken.charAt(i);
+                count++;
+            }
         }
-        return userToken;
+
+
+        return output;
     }
 
     public String generateGameToken() {
-        String gameToken = UUID.randomUUID().toString();
-        if (gameToken.length() > 3) {
-            gameToken.substring(0, 4);
+        String possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String output = "";
+
+        for(int i = 0; i < 3; i++){
+            output += possible.charAt((int)(Math.random() * 52));
         }
-        return gameToken;
+
+
+        return output;
     }
 
     public boolean isUserTokenValid(String userToken) {
         for (int i = 0; i < userTokenList.size(); i++) {
-            if (userToken.equals(userTokenList.get(i))) {
+            if (userTokenList.get(i).equals(userToken)) {
                 return true;
             }
         }
@@ -468,6 +578,47 @@ public class Game implements Runnable {
             }
         }
         return false;
+
+    }
+
+
+    public String logout(int port){
+
+
+
+        for(int i = 0; i < playerList.size(); i ++){
+            if(playerList.get(i).getPort() == port){
+                playerList.get(i).setLoggedInAndPlaying(false);
+                playerList.get(i).setCumulativeScore(0);
+                playerList.get(i).setGameToken(null);
+                playerList.get(i).setPort(0);
+                playerList.set(i, null);
+                playerList.remove(i);
+                try {
+                    socket.close();
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+
+        }
+
+        return "Logged out" + port + "skip";
+    }
+
+
+    public void sendMessage(Player player, String message) throws IOException{
+
+        System.out.println("in1");
+        int port = player.getPort();
+        System.out.println("In2");
+        Socket socket = new Socket("localhost", port);
+        PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
+        System.out.println("Sent to client: " + message);
+        printWriter.printf("%s\n", message);
+        printWriter.flush();
+
+
 
     }
 }
