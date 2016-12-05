@@ -78,6 +78,14 @@ public class Game implements Runnable {
                         System.out.println("Sent to client!!!!!!: " + output);
                         printWriter.printf("%s\n", output);
                         printWriter.flush();
+
+                        String gameToken = output.substring(output.lastIndexOf("-") + 1);
+
+                        Player newPlayer = gameMap.get(gameToken).get(0);
+
+                        sendNewParticipant(newPlayer);
+
+
                     }else {
 
                         System.out.println("Sent to client: " + output);
@@ -139,15 +147,16 @@ public class Game implements Runnable {
 
     public void sendNewParticipant(Player player) throws IOException{
 
-        Thread.yield();
+
         PrintWriter writer = new PrintWriter(socket.getOutputStream());
-        System.out.println("IN sendNEwPARTICIPANT " + player.getUsername());
+
 
 
         player.setMessage("");
         while(true){
-            if(player.getMessage().contains("Send")){
-                writer.print(player.getMessage());
+            if(player.getMessage().contains("Start")){
+                writer.print(player.getMessage().substring(5) + "\n");
+                System.out.println("Sent to client " + player.getMessage().substring(5) + " !!!!!!!!!!!!!");
                 writer.flush();
                 player.setMessage("No");
             }else{
@@ -321,6 +330,8 @@ public class Game implements Runnable {
         return output;
     }
 
+
+
     /**
      * Receives NewGame request from client and
      * checks to see if user is logged in. Upon success
@@ -424,6 +435,27 @@ public class Game implements Runnable {
             }
 
             output += "SUCCESS--" + gameToken;
+            gameMap.get(gameToken).get(0).setMessage("StartNEWPARTICIPANT--" + currentPlayer.getUsername() + "--" +
+                    currentPlayer.getCumulativeScore());
+
+            currentPlayer.setMessage("Hello");
+
+            while(true){
+
+                if(currentPlayer.getMessage().contains("ALL")){
+                    break;
+                }
+
+                try{
+                    Thread.sleep(300);
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+
+
+            }
+
+
         }
 
 
