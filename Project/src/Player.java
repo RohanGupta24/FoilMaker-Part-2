@@ -1,26 +1,26 @@
 import java.net.Socket;
 
 public class Player {
-    private static String username;
-    private static String userToken;
-    private static String gameToken;
-    private static String password;
-    private static int cumulativeScore;
-    private static int fooled;
-    private static int fooled_by;
-    private static String suggestion;
-    private static String choice;
-    private static boolean loggedInAndPlaying;
-    private static int port;
-    private static String message;
-    private static int wordOn;
+    private String username;
+    private String userToken;
+    private String gameToken;
+    private String password;
+    private int cumulativeScore;
+    private int fooled;
+    private int fooled_by;
+    private String suggestion;
+    private String choice;
+    private boolean loggedInAndPlaying;
+    private int port;
+    private String message;
+    private int wordOn;
 
     public Player(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
-    public Player(String username, String userToken, String gameToken, String password, int cumulativeScore, int fooled, int fooled_by,
+    /*public Player(String username, String userToken, String gameToken, String password, int cumulativeScore, int fooled, int fooled_by,
                   String suggestion, String choice, boolean loggedInAndPlaying, int port, String message,int wordOn) {
         this.username = username;
         this.userToken = userToken;
@@ -37,6 +37,10 @@ public class Player {
         this.wordOn = 0;
 
 
+
+    }*/
+
+    public Player() {
 
     }
 

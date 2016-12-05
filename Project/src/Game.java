@@ -5,6 +5,7 @@ import java.io.*;
 import java.net.*;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class Game implements Runnable {
     Socket socket;
@@ -12,9 +13,9 @@ public class Game implements Runnable {
     public static ArrayList<String> gameTokenList = new ArrayList<String>();     //ArrayList to store all of the game keys
     public static ArrayList<String> userTokenList = new ArrayList<String>();    //ArrayList to store all the user tokens
     public static ArrayList<Player> playerList = new ArrayList<Player>();
+    public static ArrayList<ArrayList<Player>> players = new ArrayList<ArrayList<Player>>();
     public static ArrayList<String> questionList = new ArrayList<String>();
     public static ArrayList<String> answerList = new ArrayList<String>();
-
 
     public static ConcurrentHashMap<String, Player> userMap = new ConcurrentHashMap<String, Player>();
     public static ConcurrentHashMap<String,ArrayList<Player>> gameMap = new ConcurrentHashMap<String, ArrayList<Player>>();
@@ -189,7 +190,14 @@ public class Game implements Runnable {
      * @param input
      * @return returns login message for client
      */
-    public String userLogin(String input) throws IOException{
+    public synchronized String userLogin(String input) throws IOException{
+
+        for(int i = 0; i < playerList.size(); i++) {
+            System.out.println(playerList.get(i).getUsername());
+        }
+
+        System.out.printf("ANDREWS PRIONTF 3: %s\n", playerList.stream().map(Player::getUsername).collect(Collectors.toList()));
+
 
         String output = "RESPONSE--LOGIN--";
         String[] loginData = input.split("--");
@@ -213,25 +221,41 @@ public class Game implements Runnable {
 
                     if(databaseLine[1].equals(password)){
 
-                        for(Player player: playerList) {
-                            if(player.getUsername().equals(username)) {
-                                output += "USERALREADYLOGGEDIN";
-                                return output;
+                        synchronized (playerList) {
+                            for (Player player : playerList) {
+                                if (player.getUsername().equals(username)) {
+                                    output += "USERALREADYLOGGEDIN";
+                                    return output;
+                                }
                             }
                         }
 
                         String userToken = generateUserToken();
                         output += "SUCCESS--"  + userToken;
 
+                        System.out.printf("ANDREWS PRIONTF 4 BEFORE PLY: %s\n", playerList.stream().map(Player::getUsername).collect(Collectors.toList()));
+
                         Player player = new Player(username, password);
-                        player.setUserToken(userToken);
+                        /*playerList.add(new Player(username, password));
+                        players.add(playerList);
+                        for(List<Player>playerList: players) {
+                            for (Player p : playerList) {
+                                System.out.print(p.getUsername() + " ");
+                            }
+                            System.out.println();
+                        }*/
+                        //Player player = new Player();
                         player.setUsername(username);
+                        player.setUserToken(userToken);
                         player.setLoggedInAndPlaying(false);
                         player.setPort(socket.getPort());
 
+                        System.out.printf("ANDREWS PRIONTF 1: %s\n", playerList.stream().map(Player::getUsername).collect(Collectors.toList()));
                         playerList.add(player);
+                        System.out.printf("ANDREWS PRIONTF 2: %s\n", playerList.stream().map(Player::getUsername).collect(Collectors.toList()));
+
                         userTokenList.add(userToken);
-                        userMap.put(userToken,player);
+                        //userMap.put(userToken,player);
 
 
                         return output;
@@ -269,6 +293,9 @@ public class Game implements Runnable {
         String output = "RESPONSE--STARTNEWGAME--";
         String[] newGameData = input.split("--");
         String userToken = newGameData[1];
+
+        System.out.printf("THIS IS A PLAYER TOKEN OF THE HOST: %s\n", userToken);
+
         boolean checkUserTokenValidity = isUserTokenValid(userToken);
 
         if (checkUserTokenValidity == true) {
@@ -325,9 +352,9 @@ public class Game implements Runnable {
         String userToken = joinGameData[1];
         String gameToken = joinGameData[2];
         Player currentPlayer = userMap.get(userToken);
-        System.out.println("Cureent Player " + currentPlayer.getUsername());
 
 
+        System.out.printf("THIS IS A PLAYER TOKEN OF THE REGULAR GUY: %s\n", userToken);
 
 
 
@@ -342,12 +369,15 @@ public class Game implements Runnable {
             output += "FAILURE--";
             return output;
         } else {
+            ArrayList<Player> gamePlayers = gameMap.get(gameToken);
 
 
             System.out.println(gameMap.toString());
 
-            for(int i = 0; i < playerList.size(); i++){
-                System.out.println(playerList.get(i).getUsername());
+            synchronized (playerList) {
+                for (int i = 0; i < playerList.size(); i++) {
+                    System.out.println(playerList.get(i).getUsername());
+                }
             }
 
             output += "SUCCESS--" + gameToken;
@@ -375,6 +405,7 @@ public class Game implements Runnable {
         String userToken = launchGameData[1];
         String gameToken = launchGameData[2];
 
+
         userMap.get(userToken).setMessage("ALLPARTICIPANTSHAVEJOINED");
         if(!(userTokenList.contains(userToken))){
             output += "USERNOTLOGGEDIN--";
@@ -383,8 +414,10 @@ public class Game implements Runnable {
             output += "INVALIDGAMETOKEN--";
             return output;
         }else{
-            Player player = playerList.get(0);
-            output = sendWord(player);
+            synchronized (playerList) {
+                Player player = playerList.get(0);
+                output = sendWord(player);
+            }
         }
 
 
@@ -476,8 +509,10 @@ public class Game implements Runnable {
      */
     public String sendRoundOptions() {
         String output = "ROUNDOPTIONS--";
-        for(Player p: playerList) {
-            output += p.getSuggestion() + "--";
+        synchronized (playerList) {
+            for (Player p : playerList) {
+                output += p.getSuggestion() + "--";
+            }
         }
         output += answerList.get(0);
         return output;
@@ -525,9 +560,11 @@ public class Game implements Runnable {
             return output;
         }
         else if(userEquals == 1 && gameEquals == 1) {
-            for(Player p: playerList) {
-                if(p.getUserToken().equals(userToken) && p.getGameToken().equals(gameToken)) {
-                    p.setChoice(choice);
+            synchronized (playerList) {
+                for (Player p : playerList) {
+                    if (p.getUserToken().equals(userToken) && p.getGameToken().equals(gameToken)) {
+                        p.setChoice(choice);
+                    }
                 }
             }
         }
@@ -540,6 +577,41 @@ public class Game implements Runnable {
             return output;
         }
         return output;
+    }
+
+    public String sendResults(ArrayList<Player> players, String correctChoice) {
+        String messageX = "";
+        String messageY = "";
+        String suggestionX = "";
+        String name = "";
+        for(Player p: players) {
+            suggestionX = p.getSuggestion();
+            for(Player r: players) {
+                int counter = 0;
+                if(r.getChoice().equals(correctChoice)) {
+                    messageX = "You got it right!";
+                    p.setCumulativeScore(p.getCumulativeScore() + 10);
+                }
+                if(r.equals(suggestionX)) {
+                    counter = 0;
+                }
+                if(suggestionX.equals(r.getChoice())) {
+                    counter++;
+                    if(counter != 0) {
+                        p.setCumulativeScore(p.getCumulativeScore() + 5);
+                        p.setFooled(p.getFooled() + 1);
+                        p.setFooled_by(p.getFooled_by() + 1);
+
+                        messageX += " You fooled " + r.getUsername();
+                        messageY += "You were fooled by " + p.getUsername();
+
+                    }
+
+                }
+
+            }
+        }
+        return messageX + " " + messageY;
     }
 
 
@@ -690,22 +762,23 @@ public class Game implements Runnable {
     public String logout(int port){
 
 
-
-        for(int i = 0; i < playerList.size(); i ++){
-            if(playerList.get(i).getPort() == port){
-                playerList.get(i).setLoggedInAndPlaying(false);
-                playerList.get(i).setCumulativeScore(0);
-                playerList.get(i).setGameToken(null);
-                playerList.get(i).setPort(0);
-                playerList.set(i, null);
-                playerList.remove(i);
-                try {
-                    socket.close();
-                }catch (IOException e){
-                    e.printStackTrace();
+        synchronized (playerList) {
+            for (int i = 0; i < playerList.size(); i++) {
+                if (playerList.get(i).getPort() == port) {
+                    playerList.get(i).setLoggedInAndPlaying(false);
+                    playerList.get(i).setCumulativeScore(0);
+                    playerList.get(i).setGameToken(null);
+                    playerList.get(i).setPort(0);
+                    playerList.set(i, null);
+                    playerList.remove(i);
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
 
+            }
         }
 
         return "Logged out" + port + "skip";
