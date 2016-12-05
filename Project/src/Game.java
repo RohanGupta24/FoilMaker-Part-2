@@ -4,6 +4,7 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Game implements Runnable {
     Socket socket;
@@ -13,25 +14,28 @@ public class Game implements Runnable {
     public static ArrayList<Player> playerList = new ArrayList<Player>();
     public static ArrayList<String> questionList = new ArrayList<String>();
     public static ArrayList<String> answerList = new ArrayList<String>();
-    //public static HashMap<String, String> userMap = new HashMap<String, String>();  //Map that holds username as the key and userToken as the value so one can look up a player through userToken
-    //public static HashMap<String, ArrayList<Player>> gameKeyMap = new HashMap<String, ArrayList<Player>>(); //Map to hold a list of
-    // players for each game with userToken as the reference
-    public static HashMap<String, Player> userMap = new HashMap<String, Player>(); //User token is the key and the value is a player object
-    public static HashMap<String, ArrayList<Player>> gameMap = new HashMap<String, ArrayList<Player>>(); //Game map: gameToken is key
-    // and
-    // arraylist of players in game is value
-    public static HashMap<String, ArrayList<Player>> testMap = new HashMap<String, ArrayList<Player>>();
+
+
+    public static ConcurrentHashMap<String, Player> userMap = new ConcurrentHashMap<String, Player>();
+    public static ConcurrentHashMap<String,ArrayList<Player>> gameMap = new ConcurrentHashMap<String, ArrayList<Player>>();
+
+
     public boolean wait = true;
 
-    public static
 
-    PrintWriter printWriter;
 
     public Game(Socket socket) {
         this.socket = socket;
     }
 
-
+    /**
+     *Recieves connection from client
+     *and starts new thread for the client
+     *
+     *
+     * @param args
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException {
 
         ServerSocket serverSocket = new ServerSocket(50000);
@@ -44,42 +48,28 @@ public class Game implements Runnable {
 
     }
 
-
+    /**
+     * Receives input from client and sends to
+     * getResponse method. Then sends getResponse
+     * output to client.
+     *
+     */
     public void run() {
         System.out.println("Connection received from " + socket.getPort());
 
 
-
-
         try {
 
-            printWriter = new PrintWriter(socket.getOutputStream());
+            PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
             Scanner scan = new Scanner(socket.getInputStream());
 
 
             while (scan.hasNextLine()) {
                 String input = scan.nextLine();
-                System.out.println("Recived from client: " + input);
+                System.out.println("Received from client: " + input);
                 String output = getResponse(input);
-                if(output.contains("JOINGAME")){
-                    System.out.println("Sent to client: " + output);
-                    printWriter.printf("%s\n", output);
-                    printWriter.flush();
-                    output = sendWord(playerList.get(0));
-
-                    try{
-                        Thread.sleep(2000);
-                    }catch (InterruptedException e){
-                        e.printStackTrace();
-                    }
 
 
-
-                    System.out.println("Sent to client: " + output);
-                    printWriter.printf("%s\n", output);
-                    printWriter.flush();
-
-                }
                 if(!(output.contains("skip"))) {
                     System.out.println("Sent to client: " + output);
                     printWriter.printf("%s\n", output);
@@ -96,6 +86,15 @@ public class Game implements Runnable {
         }
     }
 
+
+    /**
+     * Receives client message and sends to
+     * other methods to do logic, then returns
+     * the server to client message.
+     *
+     * @param input
+     * @return String to send to client
+     */
     public String getResponse(String input) throws IOException{
         String output = "FAIL";
 
@@ -121,6 +120,16 @@ public class Game implements Runnable {
         return output;
     }
 
+
+    /**
+     * Receives NEWUSER message from client and
+     * determins if the new user is valid. If it
+     * is valid it writes player information to UserDatabase
+     * and returns correct response message.
+     *
+     * @param input
+     * @return
+     */
     public String newUser(String input) throws IOException{
         String[] register = input.split("--");
         String output = "RESPONSE--CREATENEWUSER--";
@@ -170,7 +179,16 @@ public class Game implements Runnable {
 
     }
 
-    //INCOMPLETE: Not completely done -- need to work on the file input
+
+    /**
+     * Checks to see if the user provided is in the UserDatabase
+     * and also checks if the user is already logged in. Upon
+     * success a Player object is created and added to player list.
+     *
+     *
+     * @param input
+     * @return returns login message for client
+     */
     public String userLogin(String input) throws IOException{
 
         String output = "RESPONSE--LOGIN--";
@@ -206,11 +224,16 @@ public class Game implements Runnable {
                         output += "SUCCESS--"  + userToken;
 
                         Player player = new Player(username, password);
+                        player.setUserToken(userToken);
+                        player.setUsername(username);
+                        player.setLoggedInAndPlaying(false);
+                        player.setPort(socket.getPort());
+
                         playerList.add(player);
                         userTokenList.add(userToken);
                         userMap.put(userToken,player);
-                        player.setPort(socket.getPort());
-                        userMap.get(userToken).setLoggedInAndPlaying(false);
+
+
                         return output;
                     }
                 }
@@ -231,63 +254,42 @@ public class Game implements Runnable {
         return output;
     }
 
-    public String newGame(String input) {
+    /**
+     * Receives NewGame request from client and
+     * checks to see if user is logged in. Upon success
+     * game token is created and a new game is added to
+     * the gameMap.
+     *
+     *
+     * @param input
+     * @return NewGame message for client
+     */
+    public String newGame(String input) throws IOException{
         String status = "";
         String output = "RESPONSE--STARTNEWGAME--";
         String[] newGameData = input.split("--");
         String userToken = newGameData[1];
         boolean checkUserTokenValidity = isUserTokenValid(userToken);
+
         if (checkUserTokenValidity == true) {
-            Player player = userMap.get(userToken);
-            if (player.getLoggedInAndPlaying() == false) {
+
+            Player playerMe = userMap.get(userToken);
+
+            if (playerMe.getLoggedInAndPlaying() == false) {
+
                 String gameToken = generateGameToken();
                 status = "SUCCESS--" + gameToken;
                 gameTokenList.add(gameToken);
                 output += status;
-                //userMap.get(userToken).setLoggedInAndPlaying(true);
-                ArrayList<Player> newGame = new ArrayList();
-                newGame.add(player);
-
-                gameMap.put(gameToken, newGame);
-
-
-
-
-                player.setMessage("Continue");
-                Thread check = new Thread(){
-                    public void run(){
+                playerMe.setGameToken(gameToken);
+                ArrayList<Player> temp = new ArrayList<Player>();
+                Player asdf = userMap.get(userToken);
+                temp.add(asdf);
+                gameMap.put(gameToken, temp);
 
 
 
-                        boolean keepGoing = true;
 
-                        while(keepGoing) {
-
-                            if(player.getMessage().contains("ALL")){
-                                player.setMessage("Done");
-                                break;
-                            }
-
-                            if(player.getMessage().contains("Start")){
-                                printWriter.printf("%s\n",player.getMessage().substring(5));
-                                printWriter.flush();
-                                player.setMessage("Hello");
-
-                            }
-
-                            try{
-                                Thread.sleep(1000);
-                            }catch (InterruptedException e){
-                                e.printStackTrace();
-                            }
-                        }
-
-
-                    }
-
-                };
-
-                check.start();
 
 
                 return output;
@@ -304,13 +306,28 @@ public class Game implements Runnable {
 
     }
 
+
+    /**
+     * Checks to see if Game Token provided is valid
+     * add adds user to game is true
+     *
+     *
+     *
+     * @param input
+     * @return Message for client
+     */
     public String joinGame(String input) throws IOException {
 
+
+        System.out.println("In Join Game");
         String output = "RESPONSE--JOINGAME--";
         String[] joinGameData = input.split("--");
         String userToken = joinGameData[1];
         String gameToken = joinGameData[2];
         Player currentPlayer = userMap.get(userToken);
+        System.out.println("Cureent Player " + currentPlayer.getUsername());
+
+
 
 
 
@@ -322,41 +339,18 @@ public class Game implements Runnable {
             output += "GAMEKEYNOTFOUND--";
             return output;
         } else if (userMap.get(userToken).getLoggedInAndPlaying()) {
-
-
             output += "FAILURE--";
             return output;
         } else {
-            ArrayList<Player> gamePlayers = gameMap.get(gameToken);
 
 
+            System.out.println(gameMap.toString());
 
-            Player leader = gamePlayers.get(0);
-            leader.setMessage("StartNEWPARTICIPANT--" + currentPlayer.getUsername() + "--" + currentPlayer.getCumulativeScore());
-            gamePlayers.add(currentPlayer);
-            gameMap.put(gameToken, gamePlayers);
-            while(true){
-
-                if(leader.getMessage().contains("Done")){
-
-                    output += "SUCCESS--" + gameToken;
-                    break;
-                }else{
-
-                    try{
-                        Thread.sleep(300);
-                    }catch (InterruptedException e){
-                        e.printStackTrace();
-                    }
-
-
-                }
+            for(int i = 0; i < playerList.size(); i++){
+                System.out.println(playerList.get(i).getUsername());
             }
 
-
-
-
-
+            output += "SUCCESS--" + gameToken;
         }
 
 
@@ -364,6 +358,15 @@ public class Game implements Runnable {
         return output;
     }
 
+
+    /**
+     * Checks to make sure that user is logged in
+     * and that the game token is valid. Then sends
+     * NEWWORD to client.
+     *
+     * @param input
+     * @return New Word for client to display
+     */
     public String launchGame(String input) throws IOException{
 
 
@@ -392,6 +395,15 @@ public class Game implements Runnable {
         return output;
     }
 
+
+    /**
+     * Reads in Questions and Answers and
+     * sends to client
+     *
+     *
+     * @param player
+     * @return new word message for client
+     */
     public String sendWord(Player player) throws IOException {
         String output = "NEWGAMEWORD--";
         BufferedReader in = new BufferedReader(new FileReader(new File("WordleDeck")));
@@ -414,6 +426,14 @@ public class Game implements Runnable {
     }
 
 
+    /**
+     * Takes in client word suggestion and checks to
+     * see if valid. If it is valid send suggestion to sendRoundOptions
+     *
+     *
+     * @param input
+     * @return error message
+     */
     public String suggestions(String input) {
         String output = "RESPONSE--PLAYERSUGGESTION--";
         String[] playerSuggestionData = input.split("--");
@@ -438,7 +458,7 @@ public class Game implements Runnable {
             return output;
         }
 
-        userMap.get(userToken).setSuggestion(suggestion);
+
 
 
 
@@ -446,6 +466,14 @@ public class Game implements Runnable {
 
     }
 
+
+    /**
+     * Takes in all suggestions and send the
+     * shuffled suggestions to client
+     *
+     *
+     * @return Round Option message for client
+     */
     public String sendRoundOptions() {
         String output = "ROUNDOPTIONS--";
         for(Player p: playerList) {
@@ -455,6 +483,13 @@ public class Game implements Runnable {
         return output;
     }
 
+
+    /**
+     * Takes in user choices and does Game Logic.
+     *
+     * @param input
+     * @return Send Result message to client
+     */
     public String choices(String input) {
         String output = "RESPONSE--PLAYERCHOICE--";
         String[] playerChoiceData = input.split("--");
@@ -508,6 +543,18 @@ public class Game implements Runnable {
     }
 
 
+
+
+
+
+    /**
+     *Checks to see if recieved string is
+     * a possible Username that a client can have.
+     *
+     *
+     * @param check
+     * @return boolean is received  string is true or false
+     */
     public boolean isAlphanumericUserName(String check) {
 
         for (int i = 0; i < check.length(); i++) {
@@ -519,6 +566,14 @@ public class Game implements Runnable {
     }
 
 
+    /**
+     * Checks to see if the received string is
+     * a possible Password that a user can use.
+     *
+     *
+     * @param check
+     * @return boolean is received string true or false
+     */
     public boolean isAlphanumericPassword(String check) {
         int upper = 0;
         int number = 0;
@@ -546,6 +601,14 @@ public class Game implements Runnable {
         return true;
     }
 
+
+    /**
+     * Generates a random UserToken that is 10
+     * characters long and is only alphanumeric
+     *
+     *
+     * @return random UserToken
+     */
     public String generateUserToken() {
         String userToken = UUID.randomUUID().toString();
         String output = "";
@@ -562,6 +625,13 @@ public class Game implements Runnable {
         return output;
     }
 
+
+    /**
+     * Generates a random 3 character game token
+     *
+     *
+     * @return String of game Token
+     */
     public String generateGameToken() {
         String possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String output = "";
@@ -574,6 +644,14 @@ public class Game implements Runnable {
         return output;
     }
 
+
+    /**
+     * Checks to see if the provided userToken exists
+     * and is valid to play
+     *
+     * @param userToken
+     * @return boolean if the UserToken is Valid
+     */
     public boolean isUserTokenValid(String userToken) {
         for (int i = 0; i < userTokenList.size(); i++) {
             if (userTokenList.get(i).equals(userToken)) {
@@ -583,6 +661,14 @@ public class Game implements Runnable {
         return false;
     }
 
+
+    /**
+     * Checks to see if the provided GameToken exists
+     * and the game is being played
+     *
+     * @param gameToken
+     * @return boolean if GameToken is Valid
+     */
     public boolean isGameTokenValid(String gameToken) {
         for (int i = 0; i < gameTokenList.size(); i++) {
             if (gameToken.equals(gameTokenList.get(i))) {
@@ -593,7 +679,14 @@ public class Game implements Runnable {
 
     }
 
-
+    /**
+     * Loops through all of the players and finds the player
+     * object
+     *
+     *
+     * @param port
+     * @return Sends Logout message to client
+     */
     public String logout(int port){
 
 
