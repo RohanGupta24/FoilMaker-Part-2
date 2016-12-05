@@ -72,11 +72,22 @@ public class Game implements Runnable {
 
 
                 if(!(output.contains("skip"))) {
-                    System.out.println("Sent to client: " + output);
-                    printWriter.printf("%s\n", output);
-                    printWriter.flush();
+
+                    if(output.contains("STARTNEWGAME")){
+
+                        System.out.println("Sent to client!!!!!!: " + output);
+                        printWriter.printf("%s\n", output);
+                        printWriter.flush();
+                    }else {
+
+                        System.out.println("Sent to client: " + output);
+                        printWriter.printf("%s\n", output);
+                        printWriter.flush();
+                    }
 
                 }
+
+
 
             }
 
@@ -110,6 +121,7 @@ public class Game implements Runnable {
             output = launchGame(input);
         } else if (input.contains("STARTNEWGAME")) {
             output = newGame(input);
+            return output;
 
         } else if (input.contains("PLAYERSUGGESTION")) {
             output = suggestions(input);
@@ -126,8 +138,13 @@ public class Game implements Runnable {
 
 
     public void sendNewParticipant(Player player) throws IOException{
-        PrintWriter writer = new PrintWriter(socket.getOutputStream());
 
+        Thread.yield();
+        PrintWriter writer = new PrintWriter(socket.getOutputStream());
+        System.out.println("IN sendNEwPARTICIPANT " + player.getUsername());
+
+
+        player.setMessage("");
         while(true){
             if(player.getMessage().contains("Send")){
                 writer.print(player.getMessage());
