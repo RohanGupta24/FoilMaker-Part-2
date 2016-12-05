@@ -44,105 +44,105 @@ public class Player {
 
     }
 
-        public String getUsername() {
+        public synchronized String getUsername() {
             return this.username;
         }
 
-        public void setUsername(String username) {
+        public synchronized void setUsername(String username) {
             this.username = username;
         }
 
-        public String getPassword() {
+        public synchronized String getPassword() {
             return this.password;
         }
 
-        public void setPassword(String password) {
+        public synchronized void setPassword(String password) {
             this.password = password;
         }
 
-        public String getUserToken() {
+        public synchronized String getUserToken() {
             return this.userToken;
         }
 
-        public void setUserToken(String userToken) {
+        public synchronized void setUserToken(String userToken) {
             this.userToken = userToken;
         }
 
-        public String getGameToken() {
+        public synchronized String getGameToken() {
             return this.gameToken;
         }
 
-        public void setGameToken(String gameToken) {
+        public synchronized void setGameToken(String gameToken) {
             this.gameToken = gameToken;
         }
 
-        public int getCumulativeScore() {
+        public synchronized int getCumulativeScore() {
             return this.cumulativeScore;
         }
 
-        public void setCumulativeScore(int cumulativeScore) {
+        public synchronized void setCumulativeScore(int cumulativeScore) {
             this.cumulativeScore = cumulativeScore;
         }
 
-        public int getFooled() {
+        public synchronized int getFooled() {
             return this.fooled;
         }
 
-        public void setFooled(int fooled) {
+        public synchronized void setFooled(int fooled) {
             this.fooled = fooled;
         }
 
-        public int getFooled_by() {
+        public synchronized int getFooled_by() {
             return this.fooled_by;
         }
 
-        public void setFooled_by(int fooled_by) {
+        public synchronized void setFooled_by(int fooled_by) {
             this.fooled_by = fooled_by;
         }
 
-        public String getSuggestion() {
+        public synchronized String getSuggestion() {
             return this.suggestion;
         }
 
-        public void setSuggestion(String suggestion) {
+        public synchronized void setSuggestion(String suggestion) {
             this.suggestion = suggestion;
         }
 
-        public String getChoice() {
+        public synchronized String getChoice() {
             return this.choice;
         }
 
-        public void setChoice(String choice) {
+        public synchronized void setChoice(String choice) {
             this.choice = choice;
         }
 
-        public boolean getLoggedInAndPlaying() {
+        public synchronized boolean getLoggedInAndPlaying() {
             return this.loggedInAndPlaying;
         }
 
-        public void setLoggedInAndPlaying(boolean loggedInAndPlaying) {
+        public synchronized void setLoggedInAndPlaying(boolean loggedInAndPlaying) {
             this.loggedInAndPlaying = loggedInAndPlaying;
         }
 
-        public void setPort(int port){this.port = port;}
+        public synchronized void setPort(int port){this.port = port;}
 
-        public int getPort(){return this.port;}
+        public synchronized int getPort(){return this.port;}
 
 
 
-        public void setMessage(String message){
+        public synchronized void setMessage(String message){
             this.message = message;
         }
 
-        public String getMessage(){
+        public synchronized String getMessage(){
             return this.message;
         }
 
-        public int getWordOn(){
+        public synchronized int getWordOn(){
             return this.wordOn;
         }
 
-        public void addWordOn(){
+        public synchronized void addWordOn(){
             this.wordOn++;
         }
 
