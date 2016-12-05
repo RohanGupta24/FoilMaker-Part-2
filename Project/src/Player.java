@@ -13,6 +13,7 @@ public class Player {
     private static boolean loggedInAndPlaying;
     private static int port;
     private static String message;
+    private static int wordOn;
 
     public Player(String username, String password) {
         this.username = username;
@@ -20,19 +21,20 @@ public class Player {
     }
 
     public Player(String username, String userToken, String gameToken, String password, int cumulativeScore, int fooled, int fooled_by,
-                  String suggestion, String choice, boolean loggedInAndPlaying, int port, String message) {
+                  String suggestion, String choice, boolean loggedInAndPlaying, int port, String message,int wordOn) {
         this.username = username;
         this.userToken = userToken;
         this.password = password;
         this.cumulativeScore = cumulativeScore;
         this.fooled = fooled;
         this.fooled_by = fooled_by;
-        this.suggestion = suggestion;
+        this.suggestion = null;
         this.choice = choice;
         this.loggedInAndPlaying = false;
         this.gameToken = gameToken;
         this.port = port;
         this.message = "Hello";
+        this.wordOn = 0;
 
 
     }
@@ -129,6 +131,14 @@ public class Player {
 
         public String getMessage(){
             return this.message;
+        }
+
+        public int getWordOn(){
+            return this.wordOn;
+        }
+
+        public void addWordOn(){
+            this.wordOn++;
         }
 
 
