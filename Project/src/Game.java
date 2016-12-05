@@ -86,7 +86,18 @@ public class Game implements Runnable {
                         sendNewParticipant(newPlayer);
 
 
-                    }else {
+
+                        continue;
+                    }else if(output.contains("Pass")){
+                        System.out.println("Sent to client&&&&&&&&: " + output.substring(4));
+                        printWriter.printf("%s\n", output.substring(4));
+                        printWriter.flush();
+
+                        String newOutput = getSendWord();
+
+
+                        continue;
+                    } else{
 
                         System.out.println("Sent to client: " + output);
                         printWriter.printf("%s\n", output);
@@ -142,6 +153,21 @@ public class Game implements Runnable {
 
         return output;
     }
+
+
+
+
+
+    public String getSendWord(){
+        
+
+    }
+
+
+
+
+
+
 
 
 
@@ -440,25 +466,12 @@ public class Game implements Runnable {
 
             currentPlayer.setMessage("Hello");
 
-            while(true){
 
-                if(currentPlayer.getMessage().contains("ALL")){
-                    break;
-                }
-
-                try{
-                    Thread.sleep(300);
-                }catch (InterruptedException e){
-                    e.printStackTrace();
-                }
-
-
-            }
 
 
         }
 
-
+        output = "Pass" + output;
 
         return output;
     }
@@ -480,6 +493,10 @@ public class Game implements Runnable {
         String userToken = launchGameData[1];
         String gameToken = launchGameData[2];
 
+        for(int i = 0; i < gameMap.get(gameToken).size(); i++){
+            gameMap.get(gameToken).get(i).setMessage("ALLPARTICIPANTSHAVEJOINED");
+        }
+
 
         userMap.get(userToken).setMessage("ALLPARTICIPANTSHAVEJOINED");
         if(!(userTokenList.contains(userToken))){
@@ -491,7 +508,7 @@ public class Game implements Runnable {
         }else{
             synchronized (playerList) {
                 Player player = playerList.get(0);
-                output = sendWord(player);
+
             }
         }
 
