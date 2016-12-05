@@ -255,8 +255,7 @@ public class Game implements Runnable {
                         System.out.printf("ANDREWS PRIONTF 2: %s\n", playerList.stream().map(Player::getUsername).collect(Collectors.toList()));
 
                         userTokenList.add(userToken);
-                        //userMap.put(userToken,player);
-
+                        userMap.put(userToken,player);
 
                         return output;
                     }
@@ -315,7 +314,7 @@ public class Game implements Runnable {
                 gameMap.put(gameToken, temp);
 
 
-
+                //gameMap.get(gamekey).put(new User());
 
 
 
